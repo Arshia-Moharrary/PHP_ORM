@@ -1,0 +1,7 @@
+{
+    "host": "localhost",
+    "database": "ORM",
+    "db_user": "root",
+    "db_password": "",
+    "rdbms": "mysql"
+}
