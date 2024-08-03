@@ -32,6 +32,8 @@ class PDODatabaseConnection implements DatabaseConnectionInterface {
         }
 
         $this->connection = $pdo;
+
+        return $this;
     }
 
     public function getConnection() {
