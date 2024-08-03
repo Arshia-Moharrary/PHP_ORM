@@ -3,10 +3,14 @@
 namespace App\Database;
 
 use App\Exceptions\InsertFailedException;
+use App\Exceptions\UpdateFailedException;
+use PDOException;
 
 class PDOQueryBuilder {
     private $table;
     private $connection;
+    private $conditions = [];
+    private $values = [];
 
     public function __construct(\PDO $connection) {
         $this->connection = $connection;
@@ -40,5 +44,31 @@ class PDOQueryBuilder {
         }
 
         return (int) $id;
+    }
+
+    public function where(string $column, string $operator, string $value) {
+        $this->conditions[] = "{$column} {$operator} ?";
+        $this->values[] = $value;
+        return $this;
+    }
+
+    public function update(array $data) {
+        foreach ($data as $key => $value) {
+            $update = "{$key} = '{$value}'";
+        }
+
+        $conditions = implode(" and ", $this->conditions);
+
+        try {
+            $pdo = $this->connection;
+            $sql = "UPDATE {$this->table} SET {$update} WHERE {$conditions}";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($this->values);
+            $rows = $stmt->rowCount();
+        } catch (PDOException $e) {
+            throw new UpdateFailedException();
+        }
+
+        return $rows;
     }
 }

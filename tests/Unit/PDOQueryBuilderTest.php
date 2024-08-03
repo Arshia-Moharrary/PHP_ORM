@@ -7,6 +7,7 @@ use App\Database\PDOQueryBuilder;
 use PHPUnit\Framework\TestCase;
 use App\Helpers\Config;
 use App\Exceptions\InsertFailedException;
+use App\Exceptions\UpdateFailedException;
 
 class PDOQueryBuilderTest extends TestCase {
     // ---- insert method tests ----
@@ -47,5 +48,30 @@ class PDOQueryBuilderTest extends TestCase {
 
         $this->assertIsInt($result);
         $this->assertGreaterThan(0, $result);
+    }
+
+    // ---- update method ----
+    
+    public function testItCanUpdateData() {
+        $config = Config::get("database");
+        $config->database = "orm_test";
+        $pdo = new PDODatabaseConnection($config);
+        $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
+
+        $result = $qb->table("users")->where("username", "=", "arshia.moharrary")->where("email", "=", "arshia.moharrary@gmail.com")->update(["email" =>     "arshia@gmail.com"]);
+
+        $this->assertIsInt($result);
+        $this->assertGreaterThan(0, $result);
+    }
+
+    public function testUpdateMethodReturnExceptionIfIUpdateOperationFailed() {
+        $this->expectException(UpdateFailedException::class);
+
+        $config = Config::get("database");
+        $config->database = "orm_test";
+        $pdo = new PDODatabaseConnection($config);
+        $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
+
+        $qb->table("baby")->where("username", "=", "arshia.moharrary")->where("email", "=", "arshia.moharrary@gmail.com")->update(["email" =>     "arshia@gmail.com"]); // baby table is not exist
     }
 }
