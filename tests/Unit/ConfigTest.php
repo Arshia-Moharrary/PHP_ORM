@@ -56,4 +56,23 @@ class ConfigTest extends TestCase {
         $config = Config::get("database", "baby"); // Baby key not exist
         $this->assertEquals(null, $config);
     }
+
+    // ---- validate method tests ----
+
+    public function testValidateMethodReturnBool() {
+        $validation = Config::validate(Config::get("database"), "databaseConfig");
+        $this->assertIsBool($validation);
+    }
+
+    public function testValidateMethodReturnTrueIfConfigIsValid() {
+        $validation = Config::validate(Config::get("database"), "databaseConfig");
+        $this->assertEquals(true, $validation);
+    }
+
+    public function testValidateMethodReturnFalseIfConfigIsInvalid() {
+        $config = Config::get("database");
+        unset($config->database);
+        $validation = Config::validate($config, "databaseConfig");
+        $this->assertEquals(false, $validation);
+    }
 }
