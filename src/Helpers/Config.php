@@ -5,6 +5,14 @@ namespace App\Helpers;
 use App\Exceptions\InvalidConfigFileException;
 
 class Config {
+    const REQUIRED_DB_KEYS = [
+        "host",
+        "database",
+        "db_user",
+        "db_password",
+        "rdbms"
+    ];
+
     public static function file($fileName) {
         $filePath = realpath(dirname(__DIR__) . "/config/" . $fileName . ".json");
 
@@ -24,5 +32,15 @@ class Config {
         $result = $config->$key ?? null;
 
         return $result;
+    }
+
+    public static function validate($config, $type) {
+        $config = (array) $config;
+
+        // databaseConfig: for validation db config
+        if ($type == "databaseConfig") {
+            $configKeys = array_keys($config);
+            return $configKeys == self::REQUIRED_DB_KEYS;
+        }
     }
 }
