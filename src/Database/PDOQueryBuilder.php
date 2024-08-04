@@ -71,4 +71,19 @@ class PDOQueryBuilder {
 
         return $rows;
     }
+
+    public function reset() {
+        // ! Note: this method delete all table records !
+        $pdo = $this->connection;
+        $sql = "SHOW TABLES";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        $result = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+
+        foreach ($result as $table) {
+            $sql = "TRUNCATE TABLE {$table}";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute();
+        }
+    }
 }
