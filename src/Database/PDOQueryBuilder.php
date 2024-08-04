@@ -5,6 +5,9 @@ namespace App\Database;
 use App\Exceptions\InsertFailedException;
 use App\Exceptions\UpdateFailedException;
 use App\Exceptions\SelectFailedException;
+use App\Exceptions\DeleteFailedException;
+use App\Exceptions\WhereNotFoundException;
+use App\Exceptions\TableNotFoundException;
 use PDOException;
 
 class PDOQueryBuilder {
@@ -23,6 +26,10 @@ class PDOQueryBuilder {
     }
 
     public function insert(array $data) {
+        if (is_null($this->table)) {
+            throw new TableNotFoundException("Set table for insert a record");
+        }
+
         $columns = implode(",", array_keys($data));
         
         // Generate placeholders string
@@ -54,6 +61,14 @@ class PDOQueryBuilder {
     }
 
     public function update(array $data) {
+        if (is_null($this->table)) {
+            throw new TableNotFoundException("Set table for update a record");
+        }
+
+        if (!count($this->conditions)) {
+            throw new WhereNotFoundException("Set where for update a record");
+        }
+
         foreach ($data as $key => $value) {
             $update = "{$key} = '{$value}'";
         }
@@ -78,6 +93,10 @@ class PDOQueryBuilder {
     }
 
     public function select(array $column = []) {
+        if (is_null($this->table)) {
+            throw new TableNotFoundException("Set table for delete a record");
+        }
+        
         $select = "*";
 
         if (count($column)) {
@@ -103,6 +122,30 @@ class PDOQueryBuilder {
             echo $sql;
             throw new SelectFailedException();
         }
+    }
+
+    public function delete() {
+        if (is_null($this->table)) {
+            throw new TableNotFoundException("Set table for delete a record");
+        }
+
+        if (!count($this->conditions)) {
+            throw new WhereNotFoundException("Set where for delete a record");
+        }
+        
+        $conditions = implode(" and ", $this->conditions);
+
+        try {
+            $pdo = $this->connection;
+            $sql = "DELETE FROM {$this->table} WHERE {$conditions};";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($this->values);
+            $rows = $stmt->rowCount();
+        } catch (PDOException $e) {
+            throw new DeleteFailedException();
+        }
+
+        return $rows;
     }
 
     public function reset() {

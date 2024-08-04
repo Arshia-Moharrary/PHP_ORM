@@ -8,6 +8,8 @@ use PHPUnit\Framework\TestCase;
 use App\Helpers\Config;
 use App\Exceptions\InsertFailedException;
 use App\Exceptions\UpdateFailedException;
+use App\Exceptions\WhereNotFoundException;
+use App\Exceptions\TableNotFoundException;
 
 class PDOQueryBuilderTest extends TestCase {
     // ---- insert method tests ----
@@ -49,6 +51,24 @@ class PDOQueryBuilderTest extends TestCase {
 
         $this->assertIsInt($result);
         $this->assertEquals(1, $result);
+    }
+
+    public function testInsertMethodThrowExceptionIfTableNotSet() {
+        $this->expectException(TableNotFoundException::class);
+        $this->initData();
+
+        $config = Config::get("database");
+        $config->database = "orm_test";
+        $pdo = new PDODatabaseConnection($config);
+        $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
+
+        $data = [
+            "username" => "arshia.moharrary",
+            "password" => "arshiaarshia",
+            "email" => "arshia.moharrary@gmail.com",
+        ];
+
+        $qb->insert($data);
     }
 
     // ---- where method tests ----
@@ -119,6 +139,31 @@ class PDOQueryBuilderTest extends TestCase {
         $this->assertEquals(0, $result);
     }
 
+    public function testUpdateMethodThrowExceptionIfWhereNotSet() {
+        $this->initData();
+        $this->expectException(WhereNotFoundException::class);
+
+        $config = Config::get("database");
+        $config->database = "orm_test";
+        $pdo = new PDODatabaseConnection($config);
+        $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
+
+        $qb->table("users")
+        ->update(["email" => "test@gmail.com"]);
+    }
+
+    public function testUpdateMethodThrowExceptionIfTableNotSet() {
+        $this->initData();
+        $this->expectException(TableNotFoundException::class);
+
+        $config = Config::get("database");
+        $config->database = "orm_test";
+        $pdo = new PDODatabaseConnection($config);
+        $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
+
+        $qb->where("username", "=", "arshia.moharrary")->update(["email" => "test@gmail.com"]);
+    }
+
     // ---- select method tests ----
 
     public function testItCanSelectData() {
@@ -151,6 +196,76 @@ class PDOQueryBuilderTest extends TestCase {
 
         $this->assertIsArray($result);
         $this->assertCount(0, $result);
+    }
+
+    public function testSelectMethodThrowExceptionIfTableNotSet() {
+        $this->expectException(TableNotFoundException::class);
+        $this->initData();
+
+        $config = Config::get("database");
+        $config->database = "orm_test";
+        $pdo = new PDODatabaseConnection($config);
+        $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
+        
+        $qb->where("username", "=", "baby")->select();
+    }
+
+    // ---- delete method tests ----
+
+    public function testItCanDeleteData() {
+        $this->initData();
+
+        $config = Config::get("database");
+        $config->database = "orm_test";
+        $pdo = new PDODatabaseConnection($config);
+        $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
+        
+        $result = $qb->table("users")
+        ->where("username", "=", "arshia.moharrary")
+        ->delete();
+
+        $this->assertIsInt($result);
+        $this->assertEquals(1, $result);
+    }
+
+    public function testDeleteMethodReturnZeroIfRecordNotExist() {
+        $this->initData();
+
+        $config = Config::get("database");
+        $config->database = "orm_test";
+        $pdo = new PDODatabaseConnection($config);
+        $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
+        
+        $result = $qb->table("users")
+        ->where("username", "=", "baby") // baby username not exist
+        ->delete();
+
+        $this->assertIsInt($result);
+        $this->assertEquals(0, $result);
+    }
+
+    public function testDeleteMethodThrowExceptionIfWhereNotSet() {
+        $this->initData();
+        $this->expectException(WhereNotFoundException::class);
+
+        $config = Config::get("database");
+        $config->database = "orm_test";
+        $pdo = new PDODatabaseConnection($config);
+        $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
+        
+        $qb->table("users")->delete();
+    }
+
+    public function testDeleteMethodThrowExceptionIfTableNotSet() {
+        $this->initData();
+        $this->expectException(TableNotFoundException::class);
+
+        $config = Config::get("database");
+        $config->database = "orm_test";
+        $pdo = new PDODatabaseConnection($config);
+        $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
+        
+        $qb->where("username", "=", "arshia.moharrary")->delete();
     }
 
     // ---- other ----
