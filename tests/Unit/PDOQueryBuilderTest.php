@@ -51,6 +51,25 @@ class PDOQueryBuilderTest extends TestCase {
         $this->assertEquals(1, $result);
     }
 
+    // ---- where method tests ----
+
+    public function testItCanHandleMultipleWhere() {
+        $this->initData();
+        $this->initData(["username" => "reza.ahmadi"]);
+
+        $config = Config::get("database");
+        $config->database = "orm_test";
+        $pdo = new PDODatabaseConnection($config);
+        $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
+
+        $result = $qb->table("users")
+        ->where("username", "=", "arshia.moharrary")
+        ->where("password", "=", "arshiaarshia")
+        ->update(["password" => "1234"]);
+
+        $this->assertEquals(1, $result);
+    }
+
     // ---- update method ----
     
     public function testItCanUpdateData() {
@@ -64,7 +83,7 @@ class PDOQueryBuilderTest extends TestCase {
         $result = $qb->table("users")
         ->where("username", "=", "arshia.moharrary")
         ->where("email", "=", "arshia.moharrary@gmail.com")
-        ->update(["email" =>     "arshia@gmail.com"]);
+        ->update(["email" => "arshia@gmail.com"]);
 
         $this->assertIsInt($result);
         $this->assertGreaterThan(0, $result);
@@ -82,7 +101,7 @@ class PDOQueryBuilderTest extends TestCase {
         $qb->table("baby")
         ->where("username", "=", "arshia.moharrary")
         ->where("email", "=", "arshia.moharrary@gmail.com")
-        ->update(["email" =>     "arshia@gmail.com"]); // baby table is not exist
+        ->update(["email" => "arshia@gmail.com"]); // baby table is not exist
     }
 
     // ---- other ----
@@ -98,17 +117,17 @@ class PDOQueryBuilderTest extends TestCase {
         parent::tearDown();
     }
 
-    public function initData() {
+    public function initData(array $options = []) {
         $config = Config::get("database");
         $config->database = "orm_test";
         $pdo = new PDODatabaseConnection($config);
         $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
 
-        $data = [
+        $data = array_merge([
             "username" => "arshia.moharrary",
             "password" => "arshiaarshia",
             "email" => "arshia.moharrary@gmail.com",
-        ];
+        ], $options);
 
         $qb->table("users")->insert($data);
     }
