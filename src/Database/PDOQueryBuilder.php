@@ -4,6 +4,7 @@ namespace App\Database;
 
 use App\Exceptions\InsertFailedException;
 use App\Exceptions\UpdateFailedException;
+use App\Exceptions\SelectFailedException;
 use PDOException;
 
 class PDOQueryBuilder {
@@ -59,9 +60,13 @@ class PDOQueryBuilder {
 
         $conditions = implode(" and ", $this->conditions);
 
+        if (!empty($conditions)) {
+            $conditions = "WHERE " . $conditions;
+        }
+
         try {
             $pdo = $this->connection;
-            $sql = "UPDATE {$this->table} SET {$update} WHERE {$conditions}";
+            $sql = "UPDATE {$this->table} SET {$update} {$conditions}";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($this->values);
             $rows = $stmt->rowCount();
@@ -70,6 +75,34 @@ class PDOQueryBuilder {
         }
 
         return $rows;
+    }
+
+    public function select(array $column = []) {
+        $select = "*";
+
+        if (count($column)) {
+            $select = implode(",", $column);
+        }
+
+        $conditions = implode(" and ", $this->conditions);
+
+        if (!empty($conditions)) {
+            $conditions = "WHERE " . $conditions;
+        }
+
+        try {
+            $pdo = $this->connection;
+            $sql = "SELECT {$select} FROM {$this->table} {$conditions}";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute(array_values($this->values));
+            $fetch = $stmt->fetchAll(\PDO::FETCH_OBJ);
+
+            return $fetch;
+        } catch (PDOException $e) {
+            echo $e->getMessage();
+            echo $sql;
+            throw new SelectFailedException();
+        }
     }
 
     public function reset() {

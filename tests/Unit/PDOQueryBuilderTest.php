@@ -104,6 +104,25 @@ class PDOQueryBuilderTest extends TestCase {
         ->update(["email" => "arshia@gmail.com"]); // baby table is not exist
     }
 
+    // ---- select method tests ----
+
+    public function testItCanSelectData() {
+        $this->initData();
+
+        $config = Config::get("database");
+        $config->database = "orm_test";
+        $pdo = new PDODatabaseConnection($config);
+        $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
+
+        $result = $qb->table("users")
+        ->where("username", "=", "arshia.moharrary")
+        ->select(["email"]);
+
+        $email = $result[0]->email;
+
+        $this->assertEquals("arshia.moharrary@gmail.com", $email);
+    }
+
     // ---- other ----
 
     public function tearDown() :void {
