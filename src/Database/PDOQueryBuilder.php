@@ -8,6 +8,7 @@ use App\Exceptions\SelectFailedException;
 use App\Exceptions\DeleteFailedException;
 use App\Exceptions\WhereNotFoundException;
 use App\Exceptions\TableNotFoundException;
+use App\Exceptions\CountFailedException;
 use PDOException;
 
 class PDOQueryBuilder {
@@ -156,7 +157,20 @@ class PDOQueryBuilder {
     public function limit($start, $end) {
         $this->limit = "{$start}, {$end}";
         return $this;
-    } 
+    }
+
+    public function count(string $column) {
+        try {
+            $pdo = $this->connection;
+            $sql = "SELECT COUNT($column) AS count FROM {$this->table};";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute();
+            $fetch = $stmt->fetch(\PDO::FETCH_OBJ);
+            return $fetch->count;
+        } catch (PDOException $e) {
+            throw new CountFailedException();
+        }
+    }
 
     public function reset() {
         // ! Note: this method delete all table records !

@@ -10,7 +10,7 @@ use App\Exceptions\InsertFailedException;
 use App\Exceptions\UpdateFailedException;
 use App\Exceptions\WhereNotFoundException;
 use App\Exceptions\TableNotFoundException;
-use SebastianBergmann\CodeCoverage\Driver\Selector;
+use App\Exceptions\CountFailedException;
 
 class PDOQueryBuilderTest extends TestCase {
     // ---- insert method tests ----
@@ -284,6 +284,36 @@ class PDOQueryBuilderTest extends TestCase {
         $result = $qb->table("users")->limit(0, 2)->select();
 
         $this->assertCount(2, $result);
+    }
+
+    // ---- count method tests ----
+    
+    public function testItCanCountTableRecords() {
+        $this->initData();
+        $this->initData();
+        $this->initData();
+
+        $config = Config::get("database");
+        $config->database = "orm_test";
+        $pdo = new PDODatabaseConnection($config);
+        $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
+
+        $result = $qb->table("users")->count("id");
+
+        $this->assertIsInt($result);
+        $this->assertEquals(3, $result);
+    }
+
+    public function testCountMethodThrowExceptionIfColumnNotExist() {
+        $this->initData();
+        $this->expectException(CountFailedException::class);
+
+        $config = Config::get("database");
+        $config->database = "orm_test";
+        $pdo = new PDODatabaseConnection($config);
+        $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
+
+        $qb->table("users")->count("baby"); // baby column not exist
     }
 
     // ---- other ----
