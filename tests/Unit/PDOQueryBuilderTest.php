@@ -10,6 +10,7 @@ use App\Exceptions\InsertFailedException;
 use App\Exceptions\UpdateFailedException;
 use App\Exceptions\WhereNotFoundException;
 use App\Exceptions\TableNotFoundException;
+use SebastianBergmann\CodeCoverage\Driver\Selector;
 
 class PDOQueryBuilderTest extends TestCase {
     // ---- insert method tests ----
@@ -267,6 +268,23 @@ class PDOQueryBuilderTest extends TestCase {
         
         $qb->where("username", "=", "arshia.moharrary")->delete();
     }
+    
+    // ---- limit method tests ----
+
+    public function testItCanLimitData() {
+        $this->initData();
+        $this->initData();
+        $this->initData();
+
+        $config = Config::get("database");
+        $config->database = "orm_test";
+        $pdo = new PDODatabaseConnection($config);
+        $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
+
+        $result = $qb->table("users")->limit(0, 2)->select();
+
+        $this->assertCount(2, $result);
+    }
 
     // ---- other ----
 
@@ -275,7 +293,7 @@ class PDOQueryBuilderTest extends TestCase {
         $config->database = "orm_test";
         $pdo = new PDODatabaseConnection($config);
         $qb = new PDOQueryBuilder($pdo->connect()->getConnection());
-
+        
         $qb->reset();
 
         parent::tearDown();

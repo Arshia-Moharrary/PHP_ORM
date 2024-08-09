@@ -14,6 +14,7 @@ class PDOQueryBuilder {
     private $table;
     private $connection;
     private $conditions = [];
+    private $limit;
     private $values = [];
 
     public function __construct(\PDO $connection) {
@@ -109,17 +110,21 @@ class PDOQueryBuilder {
             $conditions = "WHERE " . $conditions;
         }
 
+        $limit = "";
+
+        if (!is_null($this->limit)) {
+            $limit = "LIMIT {$this->limit}";
+        }
+
         try {
             $pdo = $this->connection;
-            $sql = "SELECT {$select} FROM {$this->table} {$conditions}";
+            $sql = "SELECT {$select} FROM {$this->table} {$conditions} {$limit}";
             $stmt = $pdo->prepare($sql);
             $stmt->execute(array_values($this->values));
             $fetch = $stmt->fetchAll(\PDO::FETCH_OBJ);
 
             return $fetch;
         } catch (PDOException $e) {
-            echo $e->getMessage();
-            echo $sql;
             throw new SelectFailedException();
         }
     }
@@ -147,6 +152,11 @@ class PDOQueryBuilder {
 
         return $rows;
     }
+
+    public function limit($start, $end) {
+        $this->limit = "{$start}, {$end}";
+        return $this;
+    } 
 
     public function reset() {
         // ! Note: this method delete all table records !
